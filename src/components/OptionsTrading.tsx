@@ -702,7 +702,7 @@ export function OptionsTrading() {
         <div className="flex flex-col lg:h-[calc(100vh-140px)] lg:min-h-[700px] w-full bg-[#050505] border border-zinc-800 lg:rounded-[2.5rem] overflow-hidden lg:flex-row relative shadow-[0_0_100px_rgba(0,0,0,1)]">
 
             {/* 1. Main Trading Workspace (The Chart) */}
-            <div className="relative order-1 lg:flex-grow lg:order-1 select-none overflow-hidden group min-h-[50vh] lg:min-h-0 border-b lg:border-b-0 lg:border-r border-zinc-900">
+            <div className="relative order-1 flex-grow lg:order-1 select-none overflow-hidden group border-b lg:border-b-0 lg:border-r border-zinc-900 h-[50vh] lg:h-auto">
                 <canvas ref={canvasRef} className="w-full h-full block bg-black" />
 
                 {/* HUD: Identity & Liquidity (Floating Overlays) */}
@@ -821,115 +821,130 @@ export function OptionsTrading() {
             </div>
 
             {/* 2. Execution Terminal (Controls) */}
-            <div className="w-full lg:w-[420px] bg-[#080808] flex flex-col order-2 z-10 p-5 sm:p-10 relative shadow-[-20px_0_100px_rgba(0,0,0,0.5)] border-t lg:border-t-0 border-zinc-800">
-                <div className="max-w-md mx-auto w-full flex flex-col h-full gap-8">
+            <div className="w-full lg:w-[420px] bg-[#080808] flex flex-col order-2 z-10 p-5 sm:p-8 relative shadow-[-20px_0_100px_rgba(0,0,0,0.5)] border-t lg:border-t-0 border-zinc-800 max-h-screen">
+                <div className="w-full flex flex-col h-full gap-6 overflow-hidden">
 
-                    {/* Call/Put Execution Engines - REORDERED: First on Mobile */}
-                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:order-3 pt-2">
+                    {/* Call/Put Execution Engines (Mobile Optimization) */}
+                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 lg:order-3 pt-2 shrink-0">
                         <Button
-                            className="w-full h-20 sm:h-28 bg-emerald-500 hover:bg-emerald-400 text-black font-black flex flex-col items-center justify-center gap-1 rounded-[1.5rem] sm:rounded-[2rem] shadow-[0_15px_40px_rgba(16,185,129,0.2)] group transition-all active:scale-[0.98] active:translate-y-1"
+                            className="w-full h-16 sm:h-24 bg-emerald-500 hover:bg-emerald-400 text-black font-black flex flex-col items-center justify-center gap-0.5 rounded-2xl shadow-[0_15px_40px_rgba(16,185,129,0.2)] group transition-all"
                             onClick={() => placeTrade('buy')}
                             disabled={isTrading}
                         >
-                            <TrendingUp className="h-6 w-6 sm:h-10 sm:w-10 transition-transform group-hover:-translate-y-2 duration-300" />
-                            <span className="text-xl sm:text-3xl tracking-tighter leading-none mb-1">CALL</span>
-                            <span className="text-[8px] sm:text-[9px] font-black uppercase opacity-60 tracking-[0.1em]">Target High</span>
+                            <TrendingUp className="h-5 w-5 sm:h-8 sm:w-8 transition-transform group-hover:-translate-y-1" />
+                            <span className="text-lg sm:text-2xl tracking-tighter font-black">CALL</span>
                         </Button>
-
                         <Button
-                            className="w-full h-20 sm:h-28 bg-rose-500 hover:bg-rose-400 text-white font-black flex flex-col items-center justify-center gap-1 rounded-[1.5rem] sm:rounded-[2rem] shadow-[0_15px_40px_rgba(244,63,94,0.2)] group transition-all active:scale-[0.98] active:translate-y-1"
+                            className="w-full h-16 sm:h-24 bg-rose-500 hover:bg-rose-400 text-white font-black flex flex-col items-center justify-center gap-0.5 rounded-2xl shadow-[0_15px_40px_rgba(244,63,94,0.2)] group transition-all"
                             onClick={() => placeTrade('sell')}
                             disabled={isTrading}
                         >
-                            <TrendingDown className="h-6 w-6 sm:h-10 sm:w-10 transition-transform group-hover:translate-y-2 duration-300" />
-                            <span className="text-xl sm:text-3xl tracking-tighter leading-none mb-1">PUT</span>
-                            <span className="text-[8px] sm:text-[9px] font-black uppercase opacity-60 tracking-[0.1em]">Target Low</span>
+                            <TrendingDown className="h-5 w-5 sm:h-8 sm:w-8 transition-transform group-hover:translate-y-1" />
+                            <span className="text-lg sm:text-2xl tracking-tighter font-black">PUT</span>
                         </Button>
                     </div>
 
-                    {/* Investment Setup - lg:order-1 */}
-                    <div className="space-y-4 lg:order-1 order-2">
-                        <div className="flex justify-between items-end px-1">
-                            <div>
-                                <Label className="text-zinc-500 font-black text-[10px] uppercase tracking-[0.3em] leading-none mb-2 block">Set Stake</Label>
-                                <p className="text-[10px] font-bold text-zinc-600 uppercase">Trade Amount</p>
+                    <div className="flex-grow overflow-y-auto custom-scrollbar space-y-8 pr-1">
+                        {/* Investment Setup */}
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-end px-1">
+                                <Label className="text-zinc-500 font-black text-[10px] uppercase tracking-[0.3em]">Stake Amount</Label>
+                                <span className="text-xl font-black text-white tracking-tighter">KES {investment}</span>
                             </div>
-                            <div className="text-right">
-                                <span className="text-2xl sm:text-3xl font-black text-white tracking-tighter">KES {investment.toLocaleString()}</span>
+                            <div className="grid grid-cols-4 gap-2">
+                                {[500, 1000, 2500, 5000].map(amt => (
+                                    <Button
+                                        key={amt}
+                                        variant="outline"
+                                        className={`h-10 font-black rounded-lg border-2 text-[10px] ${investment === amt ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-600/30' : 'bg-transparent border-zinc-800 text-zinc-500'}`}
+                                        onClick={() => setInvestment(amt)}
+                                    >
+                                        {amt >= 1000 ? `${amt / 1000}K` : amt}
+                                    </Button>
+                                ))}
+                            </div>
+                            <Slider
+                                value={[investment]}
+                                onValueChange={(vals) => setInvestment(vals[0])}
+                                max={Math.min(fiatBalance + 5000, 100000)}
+                                step={100}
+                                className="py-4"
+                            />
+                        </div>
+
+                        {/* Expiry Setup */}
+                        <div className="space-y-4">
+                            <Label className="text-zinc-500 font-black text-[10px] uppercase tracking-[0.3em] block px-1">Trade Duration</Label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {[30, 60, 300].map(s => (
+                                    <Button
+                                        key={s}
+                                        variant="outline"
+                                        className={`h-10 font-black rounded-lg border-2 text-[10px] ${duration === s ? 'bg-white text-black border-white shadow-xl' : 'bg-transparent border-zinc-800 text-zinc-600'}`}
+                                        onClick={() => setDuration(s)}
+                                    >
+                                        {s === 300 ? '5 MIN' : `${s} SEC`}
+                                    </Button>
+                                ))}
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-4 gap-2">
-                            {[500, 1000, 2500, 5000].map(amt => (
-                                <Button
-                                    key={amt}
-                                    variant="outline"
-                                    className={`h-11 font-black rounded-xl border-2 transition-all text-[10px] ${investment === amt ? 'bg-blue-600 border-blue-400 text-white shadow-xl shadow-blue-600/30' : 'bg-transparent border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-white'}`}
-                                    onClick={() => setInvestment(amt)}
-                                >
-                                    {amt >= 1000 ? `${amt / 1000}K` : amt}
-                                </Button>
-                            ))}
+                        {/* RE-ADDED: Individual Active Trades List */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between px-1">
+                                <Label className="text-zinc-500 font-black text-[10px] uppercase tracking-[0.3em]">Open Positions</Label>
+                                <Badge className="bg-blue-600 text-white text-[10px] font-black">{activeTrades.length}</Badge>
+                            </div>
+                            <div className="space-y-2">
+                                {activeTrades.length === 0 ? (
+                                    <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-4 text-center">
+                                        <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest">No Active trades</p>
+                                    </div>
+                                ) : (
+                                    activeTrades.map(trade => (
+                                        <div key={trade.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between group hover:border-blue-500/50 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${trade.trade_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                                                    {trade.trade_type === 'buy' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-white leading-none uppercase">{trade.pair}</p>
+                                                    <p className="text-[9px] font-bold text-zinc-500 mt-1 leading-none">KES {trade.investment_amount}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm font-black text-white font-mono leading-none tracking-tighter">{getTimeRemaining(trade.expires_at)}s</p>
+                                                <div className="h-1 w-12 bg-zinc-800 rounded-full mt-2 overflow-hidden">
+                                                    <div className="h-full bg-blue-600 animate-pulse" style={{ width: '60%' }}></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         </div>
-
-                        <Slider
-                            value={[investment]}
-                            onValueChange={(vals) => setInvestment(vals[0])}
-                            max={Math.min(fiatBalance + 5000, 100000)}
-                            step={100}
-                            className="py-4"
-                        />
                     </div>
 
-                    {/* Expiry Setup - lg:order-2 */}
-                    <div className="space-y-4 lg:order-2 order-3">
-                        <Label className="text-zinc-500 font-black text-[10px] uppercase tracking-[0.3em] block px-1">Trade Duration</Label>
-                        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                            {[30, 60, 300].map(s => (
-                                <Button
-                                    key={s}
-                                    variant="outline"
-                                    className={`h-12 font-black transition-all rounded-xl border-2 text-[10px] ${duration === s ? 'bg-white text-black border-white shadow-2xl' : 'bg-transparent border-zinc-900 text-zinc-600 hover:border-zinc-700 hover:text-white'}`}
-                                    onClick={() => setDuration(s)}
-                                >
-                                    {s === 300 ? '5 MIN' : `${s} SEC`}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Outstanding Withdraw Engine (Desktop Prominent) */}
-                    <div className="pt-6 border-t border-zinc-900 mt-auto hidden lg:flex flex-col gap-4">
-                        <Button
-                            className="w-full h-14 bg-zinc-900 border border-zinc-800 text-rose-500 hover:bg-rose-500 hover:text-white font-black rounded-xl gap-2 transition-all uppercase tracking-widest text-xs shadow-xl"
-                            onClick={() => setWithdrawDialogOpen(true)}
-                        >
-                            <TrendingDown className="h-5 w-5" /> Withdraw Capital
-                        </Button>
+                    {/* Sidebar Footer Stats & Withdraw */}
+                    <div className="pt-4 border-t border-zinc-900 mt-auto shrink-0 flex flex-col gap-4 bg-[#080808]">
                         <div className="flex justify-between items-center px-2">
-                            <div className="flex items-center gap-2">
-                                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Gateway Active</span>
+                            <div className="text-center">
+                                <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Profit</p>
+                                <p className="text-xs font-black text-emerald-400 tracking-tighter">+{totalProfit.toLocaleString()}</p>
                             </div>
-                            <span className="text-[10px] font-black text-white uppercase tracking-widest opacity-40">v.4.0.1</span>
-                        </div>
-                    </div>
-
-                    {/* Sidebar Stats (Mobile Only) */}
-                    <div className="pt-8 border-t border-zinc-900 flex lg:hidden justify-between items-center text-center order-last">
-                        <div className="space-y-1">
-                            <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Total Gained</p>
-                            <p className="text-sm font-black text-emerald-400 tracking-tighter">+{totalProfit.toLocaleString()}</p>
-                        </div>
-                        <div className="h-8 w-[1px] bg-zinc-900"></div>
-                        <div className="space-y-1">
-                            <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Win Rate</p>
-                            <p className="text-sm font-black text-white tracking-tighter">{winRate}%</p>
-                        </div>
-                        <div className="h-8 w-[1px] bg-zinc-900"></div>
-                        <div className="space-y-1">
-                            <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Live Trades</p>
-                            <p className="text-sm font-black text-blue-400 tracking-tighter">{activeTrades.length}</p>
+                            <div className="h-6 w-[1px] bg-zinc-800"></div>
+                            <div className="text-center">
+                                <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Win Rate</p>
+                                <p className="text-xs font-black text-white tracking-tighter">{winRate}%</p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 rounded-lg border-zinc-800 text-rose-500 hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase ml-4"
+                                onClick={() => setWithdrawDialogOpen(true)}
+                            >
+                                Withdraw
+                            </Button>
                         </div>
                     </div>
                 </div>
