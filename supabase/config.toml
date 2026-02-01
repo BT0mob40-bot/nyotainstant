@@ -1,0 +1,16 @@
+project_id = "sjxhzmgxpacyrhxqbvok"
+
+[functions.mpesa-stk-push]
+verify_jwt = true
+
+[functions.mpesa-callback]
+verify_jwt = false
+
+[functions.admin-release-payment]
+verify_jwt = true
+
+[functions.create-meme-coin]
+
+[functions.buy-meme-coin]
+
+[functions.sell-meme-coin]
