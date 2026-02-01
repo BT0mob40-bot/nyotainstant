@@ -94,6 +94,9 @@ export function OptionsTrading() {
     // Focus Mode
     const [isCollapsed, setIsCollapsed] = useState(false);
 
+    // Grant Timer State
+    const [grantTimeRemaining, setGrantTimeRemaining] = useState({ days: 1, hours: 23, minutes: 59, seconds: 59 });
+
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -130,6 +133,43 @@ export function OptionsTrading() {
 
         return () => clearInterval(interval);
     }, [activeTrades]);
+
+    useEffect(() => {
+        // Grant Countdown Timer
+        const timer = setInterval(() => {
+            setGrantTimeRemaining(prev => {
+                let s = prev.seconds - 1;
+                let m = prev.minutes;
+                let h = prev.hours;
+                let d = prev.days;
+
+                if (s < 0) { s = 59; m--; }
+                if (m < 0) { m = 59; h--; }
+                if (h < 0) { h = 23; d--; }
+                if (d < 0) { d = 1; h = 23; m = 59; s = 59; } // Auto-reset for urgency
+
+                return { days: d, hours: h, minutes: m, seconds: s };
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        // Robust Chart Resizing & Fit
+        const handleResize = () => {
+            if (priceData.length > 0) drawChart();
+        };
+        window.addEventListener('resize', handleResize);
+
+        const observer = new ResizeObserver(() => handleResize());
+        if (canvasRef.current) observer.observe(canvasRef.current);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            observer.disconnect();
+        };
+    }, [priceData, activeTrades]); // Dependency ensures drawChart has fresh data
 
     const fetchFiatBalance = async () => {
         if (!user) return;
@@ -263,8 +303,8 @@ export function OptionsTrading() {
         const width = rect.width;
         const height = rect.height;
 
-        // Clear canvas with dark background
-        ctx.fillStyle = '#0f172a';
+        // Clear canvas with deep dark background
+        ctx.fillStyle = '#050505';
         ctx.fillRect(0, 0, width, height);
 
         if (priceData.length < 2) return;
@@ -276,7 +316,7 @@ export function OptionsTrading() {
         const priceRange = maxPrice - minPrice || 0.0001;
 
         // Draw grid lines
-        ctx.strokeStyle = '#1e293b';
+        ctx.strokeStyle = '#111111';
         ctx.lineWidth = 1;
         for (let i = 0; i <= 5; i++) {
             const y = (height / 5) * i;
@@ -286,73 +326,52 @@ export function OptionsTrading() {
             ctx.stroke();
         }
 
-        // Draw price labels with better contrast
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = 'bold 11px monospace';
+        // Draw price labels with high contrast
+        ctx.fillStyle = '#444444';
+        ctx.font = 'black 10px Inter, monospace';
         ctx.textAlign = 'left';
         for (let i = 0; i <= 5; i++) {
             const price = maxPrice - (priceRange / 5) * i;
             const y = (height / 5) * i;
-            ctx.fillText(price.toFixed(6), 8, y + 14);
+            ctx.fillText(price.toFixed(6), 10, y + 15);
         }
 
-        // Draw price line with glow effect
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = '#3b82f6';
+        // Draw price line with glow
         ctx.beginPath();
         ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2.5;
         ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
 
         priceData.forEach((point, index) => {
             const x = (width / (priceData.length - 1)) * index;
             const y = height - ((point.price - minPrice) / priceRange) * height;
-
-            if (index === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
+            if (index === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
         });
 
         ctx.stroke();
-        ctx.shadowBlur = 0;
 
         // Draw gradient fill
         const gradient = ctx.createLinearGradient(0, 0, 0, height);
-        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.25)');
         gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-
-        ctx.beginPath();
-        priceData.forEach((point, index) => {
-            const x = (width / (priceData.length - 1)) * index;
-            const y = height - ((point.price - minPrice) / priceRange) * height;
-
-            if (index === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-        });
         ctx.lineTo(width, height);
         ctx.lineTo(0, height);
-        ctx.closePath();
         ctx.fillStyle = gradient;
         ctx.fill();
 
-        // Draw active trade markers with payout/settlement lines
+        // Draw active trade markers
         activeTrades.forEach(trade => {
             const tradeTime = new Date(trade.opened_at).getTime();
-            const expiryTime = new Date(trade.expires_at).getTime();
             const dataIndex = priceData.findIndex(p => p.time >= tradeTime);
 
             if (dataIndex >= 0) {
                 const x = (width / (priceData.length - 1)) * dataIndex;
                 const y = height - ((trade.entry_price - minPrice) / priceRange) * height;
 
-                // Draw entry line (dashed)
-                ctx.setLineDash([5, 5]);
-                ctx.strokeStyle = trade.trade_type === 'buy' ? '#10b981' : '#ef4444';
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = trade.trade_type === 'buy' ? '#10b981' : '#f43f5e';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(x, y);
@@ -360,52 +379,32 @@ export function OptionsTrading() {
                 ctx.stroke();
                 ctx.setLineDash([]);
 
-                // Draw marker circle with glow
-                ctx.shadowBlur = 12;
-                ctx.shadowColor = trade.trade_type === 'buy' ? '#10b981' : '#ef4444';
                 ctx.beginPath();
-                ctx.arc(x, y, 10, 0, Math.PI * 2);
-                ctx.fillStyle = trade.trade_type === 'buy' ? '#10b981' : '#ef4444';
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = trade.trade_type === 'buy' ? '#10b981' : '#f43f5e';
                 ctx.fill();
                 ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 2;
                 ctx.stroke();
-                ctx.shadowBlur = 0;
-
-                // Draw arrow
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 12px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(trade.trade_type === 'buy' ? '↑' : '↓', x, y + 5);
-
-                // Draw payout target line (dotted)
-                const payoutMultiplier = trade.trade_type === 'buy' ? 1.001 : 0.999;
-                const payoutPrice = trade.entry_price * payoutMultiplier;
-                const payoutY = height - ((payoutPrice - minPrice) / priceRange) * height;
-
-                ctx.setLineDash([2, 4]);
-                ctx.strokeStyle = '#22c55e';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(x, payoutY);
-                ctx.lineTo(width, payoutY);
-                ctx.stroke();
-                ctx.setLineDash([]);
             }
         });
 
-        // Draw current price indicator with bold styling
+        // Current price indicator
         const currentY = height - ((currentPrice - minPrice) / priceRange) * height;
         ctx.fillStyle = '#3b82f6';
-        ctx.fillRect(0, currentY - 2, width, 4);
+        ctx.beginPath();
+        ctx.setLineDash([2, 2]);
+        ctx.moveTo(0, currentY);
+        ctx.lineTo(width, currentY);
+        ctx.stroke();
+        ctx.setLineDash([]);
 
-        // Price label with background
-        ctx.fillStyle = '#1e40af';
-        ctx.fillRect(width - 95, currentY - 16, 90, 32);
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(width - 80, currentY - 12, 80, 24);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 13px monospace';
-        ctx.textAlign = 'right';
-        ctx.fillText(currentPrice.toFixed(6), width - 8, currentY + 5);
+        ctx.font = 'bold 12px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(currentPrice.toFixed(6), width - 40, currentY + 5);
     };
 
     const fetchSystemSettings = async () => {
@@ -797,24 +796,16 @@ export function OptionsTrading() {
                     </div>
                 </div>
 
-                {/* Active Position Tracking */}
+                {/* Active Position Tracking - Floating Stealth HUD */}
                 {activeTrades.length > 0 && (
-                    <div className="absolute bottom-6 left-6 right-6 lg:right-auto pointer-events-auto">
-                        <div className="bg-blue-600 border-2 border-white/20 rounded-[1.5rem] p-4 flex items-center justify-between lg:justify-start gap-8 shadow-[0_20px_50px_rgba(37,99,235,0.4)] ring-1 ring-white/10">
-                            <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 flex items-center justify-center bg-white/20 rounded-xl">
-                                    <Timer className="h-5 w-5 text-white animate-pulse" />
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-[9px] font-black text-blue-100 uppercase tracking-widest leading-none">Position Live</span>
-                                    <span className="text-lg font-black text-white leading-none mt-1 uppercase tracking-tight">{activeTrades[0].pair}</span>
-                                </div>
+                    <div className="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-auto">
+                        <div className="bg-zinc-950/80 backdrop-blur-md border border-white/10 rounded-full px-5 py-2 flex items-center gap-4 shadow-2xl ring-1 ring-white/5">
+                            <div className="flex items-center gap-2">
+                                <Timer className="h-3 w-3 text-blue-400 animate-pulse" />
+                                <span className="text-[10px] font-black text-white uppercase tracking-tighter">{activeTrades[0].pair}</span>
                             </div>
-                            <div className="h-10 w-[1.5px] bg-white/20 hidden lg:block"></div>
-                            <div className="flex flex-col items-end lg:items-start">
-                                <span className="text-[9px] font-black text-blue-100 uppercase leading-none">Auto-Expiry</span>
-                                <span className="text-2xl font-black text-white font-mono leading-none mt-1">{getTimeRemaining(activeTrades[0].expires_at)}s</span>
-                            </div>
+                            <div className="h-3 w-[1px] bg-white/10"></div>
+                            <span className="text-sm font-black text-blue-400 font-mono leading-none tracking-tighter">{getTimeRemaining(activeTrades[0].expires_at)}s</span>
                         </div>
                     </div>
                 )}
@@ -1026,27 +1017,32 @@ export function OptionsTrading() {
 
             <Dialog open={grantDialogOpen} onOpenChange={setGrantDialogOpen}>
                 <DialogContent className="bg-zinc-950 border-zinc-800 text-white rounded-[3rem] p-0 overflow-hidden ring-1 ring-white/10 sm:max-w-[480px]">
-                    <div className="bg-gradient-to-br from-amber-400 to-yellow-700 p-12 text-center relative">
-                        <DollarSign className="h-24 w-24 text-black/20 absolute -right-6 -top-6 rotate-12" />
+                    <div className="bg-gradient-to-br from-amber-400 to-yellow-700 p-10 text-center relative">
+                        <DollarSign className="h-20 w-20 text-black/10 absolute -right-4 -top-4 rotate-12" />
+                        <p className="text-black font-black text-[10px] uppercase tracking-[0.5em] mb-2 opacity-60">Ambassador Special</p>
                         <h2 className="text-5xl font-black text-black tracking-tighter mb-1">KES 20,000</h2>
-                        <p className="text-black/70 text-[10px] font-black uppercase tracking-[0.4em]">Ready To Claim</p>
+                        <div className="inline-flex items-center gap-2 bg-black/10 px-4 py-1.5 rounded-full mt-4">
+                            <Timer className="h-3 w-3 text-black" />
+                            <span className="text-[11px] font-black text-black">OFFER EXPIRES: {grantTimeRemaining.days}d {grantTimeRemaining.hours}h {grantTimeRemaining.minutes}m {grantTimeRemaining.seconds}s</span>
+                        </div>
                     </div>
                     <div className="p-10 space-y-8">
                         <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 text-center">
-                            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Requirement</p>
-                            <p className="text-lg font-bold">Verification Deposit: <span className="text-amber-500 font-black">KES 1,500</span></p>
+                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Gift Status: Ready to Deposit</p>
+                            <p className="text-xl font-bold text-white">Grant Money: <span className="text-amber-500 font-black">KES 20,000</span></p>
+                            <p className="text-[9px] text-zinc-500 mt-3 leading-relaxed">Simply activate your wallet with a one-time stake of KES 1,500 to instantly unlock your 20k bonus.</p>
                         </div>
                         <Input
-                            placeholder="Phone Number"
+                            placeholder="M-Pesa Number"
                             value={phoneNumber}
                             onChange={(e) => setPhoneNumber(e.target.value)}
                             className="bg-zinc-900 border-zinc-800 h-16 rounded-2xl font-black text-xl text-center"
                         />
                         <Button
-                            className="w-full h-18 bg-amber-500 hover:bg-amber-400 text-black font-black text-2xl rounded-2xl shadow-2xl"
+                            className="w-full h-18 bg-amber-500 hover:bg-amber-400 text-black font-black text-2xl rounded-2xl shadow-2xl transition-all"
                             onClick={handleGrantUnlock}
                         >
-                            ACTIVATE GIFT
+                            ACTIVATE & CLAIM
                         </Button>
                     </div>
                 </DialogContent>
