@@ -821,18 +821,41 @@ export function OptionsTrading() {
             </div>
 
             {/* 2. Execution Terminal (Controls) */}
-            <div className="w-full lg:w-[420px] bg-[#080808] flex flex-col order-2 z-10 p-6 sm:p-10 justify-center relative shadow-[-20px_0_100px_rgba(0,0,0,0.5)] border-t lg:border-t-0 border-zinc-800">
-                <div className="max-w-md mx-auto w-full space-y-8">
+            <div className="w-full lg:w-[420px] bg-[#080808] flex flex-col order-2 z-10 p-5 sm:p-10 relative shadow-[-20px_0_100px_rgba(0,0,0,0.5)] border-t lg:border-t-0 border-zinc-800">
+                <div className="max-w-md mx-auto w-full flex flex-col h-full gap-8">
 
-                    {/* Investment Setup */}
-                    <div className="space-y-4">
+                    {/* Call/Put Execution Engines - REORDERED: First on Mobile */}
+                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:order-3 pt-2">
+                        <Button
+                            className="w-full h-20 sm:h-28 bg-emerald-500 hover:bg-emerald-400 text-black font-black flex flex-col items-center justify-center gap-1 rounded-[1.5rem] sm:rounded-[2rem] shadow-[0_15px_40px_rgba(16,185,129,0.2)] group transition-all active:scale-[0.98] active:translate-y-1"
+                            onClick={() => placeTrade('buy')}
+                            disabled={isTrading}
+                        >
+                            <TrendingUp className="h-6 w-6 sm:h-10 sm:w-10 transition-transform group-hover:-translate-y-2 duration-300" />
+                            <span className="text-xl sm:text-3xl tracking-tighter leading-none mb-1">CALL</span>
+                            <span className="text-[8px] sm:text-[9px] font-black uppercase opacity-60 tracking-[0.1em]">Target High</span>
+                        </Button>
+
+                        <Button
+                            className="w-full h-20 sm:h-28 bg-rose-500 hover:bg-rose-400 text-white font-black flex flex-col items-center justify-center gap-1 rounded-[1.5rem] sm:rounded-[2rem] shadow-[0_15px_40px_rgba(244,63,94,0.2)] group transition-all active:scale-[0.98] active:translate-y-1"
+                            onClick={() => placeTrade('sell')}
+                            disabled={isTrading}
+                        >
+                            <TrendingDown className="h-6 w-6 sm:h-10 sm:w-10 transition-transform group-hover:translate-y-2 duration-300" />
+                            <span className="text-xl sm:text-3xl tracking-tighter leading-none mb-1">PUT</span>
+                            <span className="text-[8px] sm:text-[9px] font-black uppercase opacity-60 tracking-[0.1em]">Target Low</span>
+                        </Button>
+                    </div>
+
+                    {/* Investment Setup - lg:order-1 */}
+                    <div className="space-y-4 lg:order-1 order-2">
                         <div className="flex justify-between items-end px-1">
                             <div>
                                 <Label className="text-zinc-500 font-black text-[10px] uppercase tracking-[0.3em] leading-none mb-2 block">Set Stake</Label>
-                                <p className="text-[10px] font-bold text-zinc-600 uppercase">Trade Investment</p>
+                                <p className="text-[10px] font-bold text-zinc-600 uppercase">Trade Amount</p>
                             </div>
                             <div className="text-right">
-                                <span className="text-3xl font-black text-white tracking-tighter">KES {investment.toLocaleString()}</span>
+                                <span className="text-2xl sm:text-3xl font-black text-white tracking-tighter">KES {investment.toLocaleString()}</span>
                             </div>
                         </div>
 
@@ -841,7 +864,7 @@ export function OptionsTrading() {
                                 <Button
                                     key={amt}
                                     variant="outline"
-                                    className={`h-11 sm:h-12 font-black rounded-2xl border-2 transition-all text-[10px] ${investment === amt ? 'bg-blue-600 border-blue-400 text-white shadow-xl shadow-blue-600/30' : 'bg-transparent border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-white'}`}
+                                    className={`h-11 font-black rounded-xl border-2 transition-all text-[10px] ${investment === amt ? 'bg-blue-600 border-blue-400 text-white shadow-xl shadow-blue-600/30' : 'bg-transparent border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-white'}`}
                                     onClick={() => setInvestment(amt)}
                                 >
                                     {amt >= 1000 ? `${amt / 1000}K` : amt}
@@ -858,15 +881,15 @@ export function OptionsTrading() {
                         />
                     </div>
 
-                    {/* Expiry Setup */}
-                    <div className="space-y-4">
-                        <Label className="text-zinc-500 font-black text-[10px] uppercase tracking-[0.3em] block px-1">Choose Duration</Label>
+                    {/* Expiry Setup - lg:order-2 */}
+                    <div className="space-y-4 lg:order-2 order-3">
+                        <Label className="text-zinc-500 font-black text-[10px] uppercase tracking-[0.3em] block px-1">Trade Duration</Label>
                         <div className="grid grid-cols-3 gap-2 sm:gap-3">
                             {[30, 60, 300].map(s => (
                                 <Button
                                     key={s}
                                     variant="outline"
-                                    className={`h-12 sm:h-14 font-black transition-all rounded-2xl border-2 text-[10px] sm:text-xs ${duration === s ? 'bg-white text-black border-white shadow-2xl' : 'bg-transparent border-zinc-900 text-zinc-600 hover:border-zinc-700 hover:text-white'}`}
+                                    className={`h-12 font-black transition-all rounded-xl border-2 text-[10px] ${duration === s ? 'bg-white text-black border-white shadow-2xl' : 'bg-transparent border-zinc-900 text-zinc-600 hover:border-zinc-700 hover:text-white'}`}
                                     onClick={() => setDuration(s)}
                                 >
                                     {s === 300 ? '5 MIN' : `${s} SEC`}
@@ -875,33 +898,27 @@ export function OptionsTrading() {
                         </div>
                     </div>
 
-                    {/* Call/Put Controls */}
-                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 pt-4">
+                    {/* Outstanding Withdraw Engine (Desktop Prominent) */}
+                    <div className="pt-6 border-t border-zinc-900 mt-auto hidden lg:flex flex-col gap-4">
                         <Button
-                            className="w-full h-24 sm:h-28 bg-emerald-500 hover:bg-emerald-400 text-black font-black flex flex-col items-center justify-center gap-1 rounded-[2rem] shadow-[0_20px_60px_rgba(16,185,129,0.2)] group transition-all active:scale-[0.98] active:translate-y-1"
-                            onClick={() => placeTrade('buy')}
-                            disabled={isTrading}
+                            className="w-full h-14 bg-zinc-900 border border-zinc-800 text-rose-500 hover:bg-rose-500 hover:text-white font-black rounded-xl gap-2 transition-all uppercase tracking-widest text-xs shadow-xl"
+                            onClick={() => setWithdrawDialogOpen(true)}
                         >
-                            <TrendingUp className="h-8 w-8 sm:h-10 sm:w-10 transition-transform group-hover:-translate-y-2 duration-300" />
-                            <span className="text-2xl sm:text-3xl tracking-tighter leading-none mb-1">CALL</span>
-                            <span className="text-[9px] font-black uppercase opacity-60 tracking-[0.1em]">Target High</span>
+                            <TrendingDown className="h-5 w-5" /> Withdraw Capital
                         </Button>
-
-                        <Button
-                            className="w-full h-24 sm:h-28 bg-rose-500 hover:bg-rose-400 text-white font-black flex flex-col items-center justify-center gap-1 rounded-[2rem] shadow-[0_20px_60px_rgba(244,63,94,0.2)] group transition-all active:scale-[0.98] active:translate-y-1"
-                            onClick={() => placeTrade('sell')}
-                            disabled={isTrading}
-                        >
-                            <TrendingDown className="h-8 w-8 sm:h-10 sm:w-10 transition-transform group-hover:translate-y-2 duration-300" />
-                            <span className="text-2xl sm:text-3xl tracking-tighter leading-none mb-1">PUT</span>
-                            <span className="text-[9px] font-black uppercase opacity-60 tracking-[0.1em]">Target Low</span>
-                        </Button>
+                        <div className="flex justify-between items-center px-2">
+                            <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Gateway Active</span>
+                            </div>
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest opacity-40">v.4.0.1</span>
+                        </div>
                     </div>
 
                     {/* Sidebar Stats (Mobile Only) */}
-                    <div className="pt-8 border-t border-zinc-900 flex lg:hidden justify-between items-center text-center">
+                    <div className="pt-8 border-t border-zinc-900 flex lg:hidden justify-between items-center text-center order-last">
                         <div className="space-y-1">
-                            <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Net Profit</p>
+                            <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Total Gained</p>
                             <p className="text-sm font-black text-emerald-400 tracking-tighter">+{totalProfit.toLocaleString()}</p>
                         </div>
                         <div className="h-8 w-[1px] bg-zinc-900"></div>
@@ -909,27 +926,32 @@ export function OptionsTrading() {
                             <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Win Rate</p>
                             <p className="text-sm font-black text-white tracking-tighter">{winRate}%</p>
                         </div>
+                        <div className="h-8 w-[1px] bg-zinc-900"></div>
+                        <div className="space-y-1">
+                            <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Live Trades</p>
+                            <p className="text-sm font-black text-blue-400 tracking-tighter">{activeTrades.length}</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* --- Global System Overlays --- */}
+            {/* --- Global System Overlays (Enhanced Responsiveness) --- */}
 
             <Dialog open={depositDialogOpen} onOpenChange={setDepositDialogOpen}>
-                <DialogContent className="bg-zinc-950 border-zinc-800 text-white rounded-[2.5rem] p-0 overflow-hidden ring-1 ring-white/10 sm:max-w-[420px]">
-                    <div className="bg-gradient-to-br from-emerald-600 to-teal-900 p-10 text-center relative">
+                <DialogContent className="bg-zinc-950 border-zinc-800 text-white rounded-[2.5rem] p-0 overflow-hidden ring-1 ring-white/10 sm:max-w-[420px] max-h-[90vh] flex flex-col">
+                    <div className="bg-gradient-to-br from-emerald-600 to-teal-900 p-8 sm:p-10 text-center relative shrink-0">
                         <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
-                        <h2 className="text-4xl font-black mb-1 tracking-tighter relative z-10">Add Capital</h2>
+                        <h2 className="text-3xl sm:text-4xl font-black mb-1 tracking-tighter relative z-10">Add Capital</h2>
                         <p className="text-emerald-100/60 text-[10px] font-black uppercase tracking-[0.3em] relative z-10">Instant Funding</p>
                     </div>
-                    <div className="p-8 sm:p-10 space-y-6">
+                    <div className="p-8 sm:p-10 space-y-6 overflow-y-auto custom-scrollbar">
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest px-2">Registered Phone</Label>
                             <Input
                                 placeholder="2547XXXXXXXX"
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value)}
-                                className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl font-black text-lg text-white text-center"
+                                className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl font-black text-lg text-white text-center focus:ring-2 focus:ring-emerald-500/50"
                             />
                         </div>
                         <div className="space-y-2">
@@ -939,11 +961,11 @@ export function OptionsTrading() {
                                 placeholder={`Min KES ${minDeposit}`}
                                 value={depositAmount}
                                 onChange={(e) => setDepositAmount(e.target.value)}
-                                className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl font-black text-lg text-white text-center"
+                                className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl font-black text-lg text-white text-center focus:ring-2 focus:ring-emerald-500/50"
                             />
                         </div>
                         <Button
-                            className="w-full h-16 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xl rounded-2xl shadow-2xl transition-all active:scale-95"
+                            className="w-full h-16 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xl rounded-2xl shadow-2xl transition-all active:scale-95 shrink-0"
                             onClick={handleDeposit}
                             disabled={isDepositing}
                         >
@@ -954,28 +976,30 @@ export function OptionsTrading() {
             </Dialog>
 
             <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
-                <DialogContent className="bg-zinc-950 border-zinc-800 text-white rounded-[2.5rem] p-0 overflow-hidden ring-1 ring-white/10 sm:max-w-[420px]">
-                    <div className="bg-zinc-900 p-10 text-center relative border-b border-zinc-800">
-                        <TrendingDown className="h-16 w-16 text-rose-500 mx-auto mb-4" />
-                        <h2 className="text-4xl font-black mb-1 tracking-tighter">Cash Out</h2>
+                <DialogContent className="bg-zinc-950 border-zinc-800 text-white rounded-[2.5rem] p-0 overflow-hidden ring-1 ring-white/10 sm:max-w-[420px] max-h-[90vh] flex flex-col">
+                    <div className="bg-zinc-900 p-8 sm:p-10 text-center relative border-b border-zinc-800 shrink-0">
+                        <TrendingDown className="h-12 w-12 sm:h-16 sm:w-16 text-rose-500 mx-auto mb-4" />
+                        <h2 className="text-3xl sm:text-4xl font-black mb-1 tracking-tighter">Cash Out</h2>
                         <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] mt-2">Verified Destination</p>
                     </div>
-                    <div className="p-8 sm:p-10 space-y-6">
-                        <Input
-                            placeholder="M-Pesa Number"
-                            value={withdrawPhone}
-                            onChange={(e) => setWithdrawPhone(e.target.value)}
-                            className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl font-black text-lg text-center"
-                        />
-                        <Input
-                            type="number"
-                            placeholder="Amount (KES)"
-                            value={withdrawAmount}
-                            onChange={(e) => setWithdrawAmount(e.target.value)}
-                            className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl font-black text-lg text-center"
-                        />
+                    <div className="p-8 sm:p-10 space-y-6 overflow-y-auto custom-scrollbar">
+                        <div className="space-y-4">
+                            <Input
+                                placeholder="M-Pesa Number"
+                                value={withdrawPhone}
+                                onChange={(e) => setWithdrawPhone(e.target.value)}
+                                className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl font-black text-lg text-center focus:ring-2 focus:ring-rose-500/50"
+                            />
+                            <Input
+                                type="number"
+                                placeholder="Amount (KES)"
+                                value={withdrawAmount}
+                                onChange={(e) => setWithdrawAmount(e.target.value)}
+                                className="bg-zinc-900 border-zinc-800 h-14 rounded-2xl font-black text-lg text-center focus:ring-2 focus:ring-rose-500/50"
+                            />
+                        </div>
                         <Button
-                            className="w-full h-16 bg-white text-black hover:bg-zinc-200 font-black text-xl rounded-2xl transition-all"
+                            className="w-full h-16 bg-white text-black hover:bg-zinc-200 font-black text-xl rounded-2xl transition-all shrink-0"
                             onClick={handleWithdraw}
                             disabled={isWithdrawing}
                         >
